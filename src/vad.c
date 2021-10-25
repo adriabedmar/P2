@@ -12,7 +12,6 @@ const float A2 = 10;              /* threshold over noise for k2 */
 const double MIN_FRAMES_SV = 7;       /* Minimun time in frames to change from silence to voice */
 const double MIN_FRAMES_VS = 10;      /* Minimun time in frames to change from voice to silence */
 
-//Prova git
 
 /* 
  * As the output state is only ST_VOICE, ST_SILENCE, or ST_UNDEF,
