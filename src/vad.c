@@ -3,8 +3,14 @@
 #include <stdio.h>
 
 #include "vad.h"
+#include "pav_analysis.h"
 
 const float FRAME_TIME = 10.0F; /* in ms. */
+const double INIT_FRAMES = 12;         /* in frames */
+const float A1 = 3;               /* threshold over noise for k1 */
+const float A2 = 10;              /* threshold over noise for k2 */
+const double MIN_FRAMES_SV = 7;       /* Minimun time in frames to change from silence to voice */
+const double MIN_FRAMES_VS = 10;      /* Minimun time in frames to change from voice to silence */
 
 /* 
  * As the output state is only ST_VOICE, ST_SILENCE, or ST_UNDEF,
@@ -22,9 +28,10 @@ const char *state2str(VAD_STATE st) {
 
 /* Define a datatype with interesting features */
 typedef struct {
-  float zcr;
+  //float zcr;
   float p;
-  float am;
+  //float am;
+
 } Features;
 
 /* 
@@ -42,7 +49,10 @@ Features compute_features(const float *x, int N) {
    * For the moment, compute random value between 0 and 1 
    */
   Features feat;
-  feat.zcr = feat.p = feat.am = (float) rand()/RAND_MAX;
+  //feat.zcr = compute_zcr(x,N,fm);
+  feat.p = compute_power(x,N);
+  //feat.am = compute_am(x,N);
+
   return feat;
 }
 
@@ -53,8 +63,12 @@ Features compute_features(const float *x, int N) {
 VAD_DATA * vad_open(float rate) {
   VAD_DATA *vad_data = malloc(sizeof(VAD_DATA));
   vad_data->state = ST_INIT;
+  vad_data->laststate = ST_INIT;
   vad_data->sampling_rate = rate;
   vad_data->frame_length = rate * FRAME_TIME * 1e-3;
+  vad_data->frames_VS = MIN_FRAMES_VS;
+  vad_data->frames_SV = MIN_FRAMES_SV;
+  vad_data->initFrames = INIT_FRAMES;
   return vad_data;
 }
 
@@ -89,21 +103,86 @@ VAD_STATE vad(VAD_DATA *vad_data, float *x) {
 
   switch (vad_data->state) {
   case ST_INIT:
-    vad_data->state = ST_SILENCE;
+    //For the Init frames we calculate the median power level 
+    vad_data->initFrames -= 1;
+    vad_data->k0 += pow(10,(vad_data->last_feature)/10);
+    if(vad_data->initFrames <= 0){
+      vad_data->k0 = 10*log10((vad_data->k0)/INIT_FRAMES);
+      vad_data->k1 = vad_data->k0 + A1;
+      vad_data->k2 = vad_data->k0 + A2;
+      vad_data->state = ST_SILENCE;
+      vad_data->laststate = ST_SILENCE;
+    }
     break;
 
   case ST_SILENCE:
-    if (f.p > 0.95)
-      vad_data->state = ST_VOICE;
+    if (vad_data->last_feature >= vad_data->k1){
+      vad_data->state = ST_UNDEF;
+    }
     break;
 
   case ST_VOICE:
-    if (f.p < 0.01)
-      vad_data->state = ST_SILENCE;
+    if (vad_data->last_feature < vad_data->k2){
+      vad_data->state = ST_UNDEF;
+    }  
     break;
 
   case ST_UNDEF:
+    if (vad_data->laststate == ST_SILENCE){
+      if (vad_data->last_feature >= vad_data->k1){
+        vad_data->frames_SV -=1;
+        if((vad_data->frames_SV <= 0) && (vad_data->last_feature >= vad_data->k2)){
+          vad_data->state = ST_VOICE;
+          vad_data->laststate = ST_VOICE;
+          vad_data->frames_SV = MIN_FRAMES_SV;
+          break;
+        }
+        if(vad_data->frames_VS <= 0){
+          vad_data->state = ST_SILENCE;
+          vad_data->laststate = ST_SILENCE;
+          vad_data->frames_SV = MIN_FRAMES_SV;
+          break;
+        }
+        else{
+          break;
+        }
+
+      }
+      else{
+        vad_data->state = ST_SILENCE;
+        vad_data->laststate = ST_SILENCE;
+        vad_data->frames_SV = MIN_FRAMES_SV;
+        break;
+      }
+    if (vad_data->laststate == ST_VOICE){
+      if (vad_data->last_feature <= vad_data->k2){
+        vad_data->frames_VS -=1;
+        if((vad_data->frames_VS <= 0) && (vad_data->last_feature <= vad_data->k1)){
+          vad_data->state = ST_SILENCE;
+          vad_data->laststate = ST_SILENCE;
+          vad_data->frames_VS = MIN_FRAMES_VS;
+          break;
+        }
+        if(vad_data->frames_VS <= 0){
+          vad_data->state = ST_VOICE;
+          vad_data->laststate = ST_VOICE;
+          vad_data->frames_VS = MIN_FRAMES_VS;
+          break;
+        }
+        else{
+          break;
+        }
+      }
+      else{
+        vad_data->state = ST_VOICE;
+        vad_data->laststate = ST_VOICE;
+        vad_data->frames_VS = MIN_FRAMES_VS;
+        break;
+      }
+    } 
+  }
     break;
+    
   }
 
   if (vad_data->state == ST_SILENCE ||

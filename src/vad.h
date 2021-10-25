@@ -16,6 +16,20 @@ typedef struct {
   float sampling_rate;
   unsigned int frame_length;
   float last_feature; /* for debuggin purposes */
+
+   /*Thresholds*/
+  float k0;                   /*Reference level*/
+  float k1;                   /*Posibility of change*/
+  float k2;                   /*Confirmation of change*/
+
+  /*Minimum durations to consider a change of state, in frames*/
+  int frames_VS;
+  int frames_SV;
+
+  int initFrames;     /*Number of frames used to initialize*/
+
+  VAD_STATE laststate;
+
 } VAD_DATA;
 
 /* Call this function before using VAD: 
