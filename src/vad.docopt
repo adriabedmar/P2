@@ -1,7 +1,7 @@
 VAD - Voice Activity Detector
 
 Usage:
-   vad [options] -i <input-wav> -o <output-vad> [-w <output-wav>]
+   vad [options] -i <input-wav> -o <output-vad> [-w <output-wav>] [--noise-threshold=<k>] [--noise-hysteresis=<l>] [--silence-voiced=<m>] [--voiced-silence=<n>]
    vad (-h | --help)
    vad --version
 
@@ -9,6 +9,10 @@ Options:
    -i FILE, --input-wav=FILE   WAVE file for voice activity detection
    -o FILE, --output-vad=FILE  Label file with the result of VAD
    -w FILE, --output-wav=FILE  WAVE file with silences cleared
+   -k char, --noise-threshold=<k>     Threshold over noise to determine the sound as voiced [default: 5]
+   -l char, --noise-hysteresis=<l>    Threshold over a1 that the sound has to surpass in a certain time to determine the sound as voiced [default: 4]
+   -m char, --silence-voiced=<m>      Maximum time (frames) to surpass the threshold and determine that the section has passed from silence to voice [default: 2]
+   -n char, --voiced-silence=<n>      Maximum time (frames) to surpass the threshold and determine that the section has passed from voice to silence [default: 11]
    -v, --verbose  Show debug information
    -h, --help     Show this screen
    --version      Show the version of the project

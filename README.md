@@ -105,15 +105,25 @@ Ejercicios
   continuación, una captura de `wavesurfer` en la que se vea con claridad la señal temporal, el contorno de
   potencia y la tasa de cruces por cero, junto con el etiquetado manual de los segmentos.
 
+	La segmentación en tramos de voz y silencio para el audio grabado en la primera sesión queda de la siguiente manera:
+	<img src="img/wvsrfr_pwr_trans_zcr.png" align="center">
+	De arriba para abajo se contabilizan los cruzes por zero, la potència en dB, la forma de onda y la transcripción.
 
 - A la vista de la gráfica, indique qué valores considera adecuados para las magnitudes siguientes:
 
 	* Incremento del nivel potencia en dB, respecto al nivel correspondiente al silencio inicial, para
 	  estar seguros de que un segmento de señal se corresponde con voz.
 
+	  Se tiene que incrementar un poco menos de 10dB para passar de silencio a voz.
+
 	* Duración mínima razonable de los segmentos de voz y silencio.
 
+	  Los segmentos de silencio han de ser mayores a 200ms ya que hay tramos de voz en los que se producen pausas muy pequeñas entre palabras y baja la potencia pero no se tiene que cambiar de estado.
+	  Los segmentos de voz han de ser mayores a 150ms porque hay tramos de silencio de este tamaño. 
+
 	* ¿Es capaz de sacar alguna conclusión a partir de la evolución de la tasa de cruces por cero?
+
+	  Cuando baja la tasa de cruzes se trata de sonidos mas sonoros con algunos picos en consonantes sordas como con la 'x'. 
 
 
 ### Desarrollo del detector de actividad vocal
@@ -121,15 +131,29 @@ Ejercicios
 - Complete el código de los ficheros de la práctica para implementar un detector de actividad vocal tan
   exacto como sea posible. Tome como objetivo la maximización de la puntuación-F `TOTAL`.
 
+  Para la detección de tramos de voz y los cambios se han usado umbrales de potencia y unos tiempos mínimos para superarlos con tal de detectar un cambio de tramo. Para la potencia del silencio se usa la media de los frames iniciales asumiendo que todas las grabaciones empiezan con un silencio.
+
+  El detector consigue la siguiente puntuación F-Score ponderado:
+  <img src="img/F-Score_pav_4301.png" align="center">
+
 - Inserte una gráfica en la que se vea con claridad la señal temporal, el etiquetado manual y la detección
   automática conseguida para el fichero grabado al efecto. 
 
+  La siguiente gráfica muestra la detección automatica (arriba), la manual (medio) y la señal temporal (abajo)
+  <img src="img/Compare_vad_lab.png" align="center">
 
 - Explique, si existen. las discrepancias entre el etiquetado manual y la detección automática.
+
+  Se puede ver claramente como la detección automática detecta muy bien los cambios de silencio a voz pero tiene más problemas con el paso de voz a silencio. La transición para detectar este cambio es mucho mas larga y provoca que se considere como voz un trozo que en el etiquetado manual es silencio. 
 
 - Evalúe los resultados sobre la base de datos `db.v4` con el script `vad_evaluation.pl` e inserte a 
   continuación las tasas de sensibilidad (*recall*) y precisión para el conjunto de la base de datos (sólo
   el resumen).
+
+  Para la totalidad de la base de datos se obtiene:
+  <img src="img/db_analysis.png" align="center">
+
+  Como se puede ver la detección de los tramos de voz és muy buena con un Recall del 96% y una F-Score del 95% pero la contrapartida es el recall mas bajo para el silencio (82%) que baja el F-Score total al 93%. El resultado es consistente con el análisi anterior para el audio grabado. Se consigue una muy buena detección de silencio a voz y se alargan los tramos de voz.
 
 
 ### Trabajos de ampliación
@@ -140,16 +164,27 @@ Ejercicios
   la que se vea con claridad la señal antes y después de la cancelación (puede que `wavesurfer` no sea la
   mejor opción para esto, ya que no es capaz de visualizar varias señales al mismo tiempo).
 
+  Usando las funcionalidades de la libreria `sndfile`, en concreto las funciones sf_seek() y sf_write_float() que permiten posicionarse en el fichero .wav de salida y escribir los tramos de silencio como zeros.
+
+  <img src="img/original_silenced.png" align="center">
+
 #### Gestión de las opciones del programa usando `docopt_c`
 
 - Si ha usado `docopt_c` para realizar la gestión de las opciones y argumentos del programa `vad`, inserte
   una captura de pantalla en la que se vea el mensaje de ayuda del programa.
 
+  <img src="img/help_vad.png" align="center">
 
 ### Contribuciones adicionales y/o comentarios acerca de la práctica
 
 - Indique a continuación si ha realizado algún tipo de aportación suplementaria (algoritmos de detección o 
   parámetros alternativos, etc.).
+
+  Para optimizar los valores de los umbrales se ha usado una modificación del script bash `run_vad.sh` para hacer una búsqueda exaustiva de los parámetros que maximizan la F-Score en la base de datos usada.
+
+  <img src="img/optimization.png" align="center">
+
+  Con esto se obtiene un umbral de 5dB para detectar un cambio de sonido/voz o viceversa con hysteresis de 4dB más para confirmar los cambios. Por último los tiempos en frames para superar los umbrales en el caso de silencio a voz es 1 frame y de voz a silencio son 11 frames. 
 
 - Si lo desea, puede realizar también algún comentario acerca de la realización de la práctica que
   considere de interés de cara a su evaluación.

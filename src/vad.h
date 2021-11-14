@@ -17,14 +17,20 @@ typedef struct {
   unsigned int frame_length;
   float last_feature; /* for debuggin purposes */
 
-   /*Thresholds*/
+   /*Thresholds for power*/
   float k0;                   /*Reference level*/
   float k1;                   /*Posibility of change*/
   float k2;                   /*Confirmation of change*/
 
-  /*Minimum durations to consider a change of state, in frames*/
+  float a1;                   /*Threshold over k0*/
+  float a2;                   /*Threshold over k1*/
+
+  /*Durations left to consider a change of state, in frames*/
   int frames_VS;
   int frames_SV;
+   /*Maximum durations left to consider a change of state, in frames*/
+  int max_VS;
+  int max_SV;
 
   int initFrames;     /*Number of frames used to initialize*/
 
@@ -35,8 +41,10 @@ typedef struct {
 /* Call this function before using VAD: 
    It should return allocated and initialized values of vad_data
 
-   sampling_rate: ... the sampling rate */
-VAD_DATA *vad_open(float sampling_rate);
+   sampling_rate: ... the sampling rate 
+   thresholds over noise
+   time to surpass  the thresholds to change from voice to noise and viceversa*/
+VAD_DATA *vad_open(float sampling_rate, float a1, float a2, int sv, int vs);
 
 /* vad works frame by frame.
    This function returns the frame size so that the program knows how
