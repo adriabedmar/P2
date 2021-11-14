@@ -44,28 +44,28 @@ for a1 in "${A1[@]}"; do
 done
 
 
-for zcr in "${ZCR[@]}"; do
-    echo "ZCR threshold = $zcr"
-    for filewav in $DB/*/*wav; do
-    #    echo
-    #    echo "**************** $filewav ****************"
-    #    if [[ ! -f $filewav ]]; then 
-    #	    echo "Wav file not found: $filewav" >&2
-    #	    exit 1
-    #    fi
+# for zcr in "${ZCR[@]}"; do
+#     echo "ZCR threshold = $zcr"
+#     for filewav in $DB/*/*wav; do
+#     #    echo
+#     #    echo "**************** $filewav ****************"
+#     #    if [[ ! -f $filewav ]]; then 
+#     #	    echo "Wav file not found: $filewav" >&2
+#     #	    exit 1
+#     #    fi
 
-        filevad=${filewav/.wav/.vad}
+#         filevad=${filewav/.wav/.vad}
 
-        $CMD -i $filewav -o $filevad -l $zcr || exit 1
+#         $CMD -i $filewav -o $filevad -l $zcr || exit 1
 
-    # Alternatively, uncomment to create output wave files
-        #filewavOut=${filewav/.wav/.wav}
-        #$CMD -i $filewav -o $filevad -w $filewavOut || exit 1
+#     # Alternatively, uncomment to create output wave files
+#         #filewavOut=${filewav/.wav/.wav}
+#         #$CMD -i $filewav -o $filevad -w $filewavOut || exit 1
 
-    done
+#     done
 
-    scripts/vad_evaluation.pl $DB/*/*lab
-done
+#     scripts/vad_evaluation.pl $DB/*/*lab
+# done
 
 
 exit 0
